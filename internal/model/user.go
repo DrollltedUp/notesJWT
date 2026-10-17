@@ -2,6 +2,7 @@ package model
 
 import (
 	"errors"
+	"math/rand"
 	"time"
 )
 
@@ -20,6 +21,29 @@ var (
 )
 
 type Store interface {
-	Create(u User) (User, error)
+	Create(email, password string) (User, error)
 	GetByMail(email string) (User, error)
+}
+
+func Create(email, password string) (User, error) {
+	user := User{
+		ID:           rand.Intn(1000000),
+		Email:        email,
+		PasswordHash: password,
+		CreatedAt:    time.Now(),
+	}
+
+	if user.Email == email {
+		return User{}, ErrMailTaken
+	}
+
+	return user, nil
+}
+
+func (u User) GetByMail(email string) (User, error) {
+	if u.Email != email {
+		return User{}, ErrNotFound
+	}
+
+	return u, nil
 }
