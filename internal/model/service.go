@@ -23,7 +23,7 @@ func (s *Service) Register(email, password string) (User, error) {
 
 	lowerEmail := strings.ToLower(strings.TrimSpace(email))
 
-	if !isValidateEmail(lowerEmail) && isValidatePassword(password) {
+	if !isValidateEmail(lowerEmail) && !isValidatePassword(password) {
 		return User{}, ErrInvalidOutput
 	}
 
@@ -53,10 +53,5 @@ func isValidateEmail(email string) bool {
 }
 
 func isValidatePassword(password string) bool {
-	countSymbolsPassword := utf8.RuneCountInString(password)
-	if password == "" && len(password) > 72 && countSymbolsPassword <= 8 {
-		return false
-	}
-
-	return true
+	return utf8.RuneCountInString(password) >= 8 && len(password) <= 72
 }
