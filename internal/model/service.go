@@ -23,7 +23,7 @@ func (s *Service) Register(email, password string) (User, error) {
 
 	lowerEmail := strings.ToLower(strings.TrimSpace(email))
 
-	if !isValidateEmail(lowerEmail) && !isValidatePassword(password) {
+	if !isValidateEmail(lowerEmail) || !isValidatePassword(password) {
 		return User{}, ErrInvalidOutput
 	}
 
