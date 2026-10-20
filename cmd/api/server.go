@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/DrollltedUp/notesJWT/internal/auth"
 	"github.com/DrollltedUp/notesJWT/internal/model"
 )
 
@@ -16,8 +17,9 @@ type errorDTO struct {
 }
 
 type ServerHTTP struct {
-	svc *model.Service
-	log *slog.Logger
+	svc    *model.Service
+	log    *slog.Logger
+	tokens *auth.TokenManager
 }
 
 type registerRequest struct {
@@ -30,16 +32,27 @@ type registerResponse struct {
 	Email string `json:"email"`
 }
 
-func NewServerHTTP(svc *model.Service, log *slog.Logger) *ServerHTTP {
+type loginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type loginResponse struct {
+	Token string `json:"token"`
+}
+
+func NewServerHTTP(svc *model.Service, log *slog.Logger, tokens *auth.TokenManager) *ServerHTTP {
 	return &ServerHTTP{
-		svc: svc,
-		log: log,
+		svc:    svc,
+		log:    log,
+		tokens: tokens,
 	}
 }
 
 func (s *ServerHTTP) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /register", s.handleRegister)
+	mux.HandleFunc("POST /login", s.handleLogin)
 
 	return mux
 }
@@ -68,6 +81,38 @@ func (s *ServerHTTP) handleRegister(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, registerResponse{
 		ID:    user.ID,
 		Email: user.Email,
+	})
+
+}
+
+func (s *ServerHTTP) handleLogin(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
+	var loginRequest loginRequest
+	if err := json.NewDecoder(r.Body).Decode(&loginRequest); err != nil {
+		writeError(w, http.StatusBadRequest, "bad request")
+		return
+	}
+
+	user, err := s.svc.Login(loginRequest.Email, loginRequest.Password)
+	if err != nil {
+		switch {
+		case errors.Is(err, model.ErrInvalidCredentation):
+			writeError(w, http.StatusUnauthorized, "invalid email or password")
+		default:
+			writeError(w, http.StatusInternalServerError, "internal error")
+		}
+		return
+	}
+
+	token, err := s.tokens.Issue(user.ID)
+	if err != nil {
+		s.log.Error("issue token failed", "err", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusAccepted, loginResponse{
+		Token: token,
 	})
 
 }

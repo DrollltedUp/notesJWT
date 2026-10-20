@@ -7,13 +7,20 @@ import (
 	"os"
 	"time"
 
+	"github.com/DrollltedUp/notesJWT/internal/auth"
 	"github.com/DrollltedUp/notesJWT/internal/model"
 )
 
 func main() {
 	log := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	svc := model.NewService(model.NewStore())
-	srv := NewServerHTTP(svc, log)
+	secret := os.Getenv("JWT_SECRET")
+	if secret == "" {
+		log.Error("JWT_SECRET is not set")
+		os.Exit(1)
+	}
+	tokens := auth.NewTokenManager(secret, 24*time.Hour)
+	srv := NewServerHTTP(svc, log, tokens)
 
 	httpServer := &http.Server{
 		Addr:              ":9097",
