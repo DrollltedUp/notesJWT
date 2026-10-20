@@ -26,7 +26,7 @@ func TestIsValidPassword(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			got := isValidatePassword(tt.password)
 			if got != tt.want {
-				t.Errorf("isValidPassword(%q) = %v, want %v", tt.password, got, tt.name)
+				t.Errorf("isValidPassword(%q) = %v, want %v", tt.password, got, tt.want)
 			}
 		})
 	}
@@ -34,8 +34,29 @@ func TestIsValidPassword(t *testing.T) {
 }
 
 func TestIsValidEmail(t *testing.T) {
+	tests := []struct {
+		name  string
+		email string
+		want  bool
+	}{
+		{"нормальный", "a@b.com", true},
+		{"без @", "abc", false},
+		{"пустой", "", false},
+		{"с именем", "Имя <a@b.com>", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := isValidateEmail(tt.email)
+			if got != tt.want {
+				t.Errorf("isValidEmail (%q) = %v. want %v", tt.email, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRegister_OK(t *testing.T) {
 	svc := NewService(NewStore())
-	u, err := svc.Register("  A@B.com ", "supersecret")
+	u, err := svc.Register("A@B.com", "supersecret")
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err) // Fatalf: с ошибкой дальше смотреть нечего
 	}
@@ -61,6 +82,7 @@ func TestRegister_InvalidInput(t *testing.T) {
 	}{
 		{"плохой email", "abc", "supersecret"},
 		{"короткий пароль", "a@b.com", "123"},
+		{"длинный пароль", "a@b.com", strings.Repeat("a", 73)},
 	}
 
 	for _, tt := range tests {
