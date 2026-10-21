@@ -1,10 +1,12 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/DrollltedUp/notesJWT/internal/auth"
@@ -41,6 +43,8 @@ type loginResponse struct {
 	Token string `json:"token"`
 }
 
+type ctxKey struct{}
+
 func NewServerHTTP(svc *model.Service, log *slog.Logger, tokens *auth.TokenManager) *ServerHTTP {
 	return &ServerHTTP{
 		svc:    svc,
@@ -53,6 +57,7 @@ func (s *ServerHTTP) routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /register", s.handleRegister)
 	mux.HandleFunc("POST /login", s.handleLogin)
+	mux.Handle("GET /me", s.authMiddleware(http.HandlerFunc(s.handleMe)))
 
 	return mux
 }
@@ -111,10 +116,38 @@ func (s *ServerHTTP) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
-	writeJSON(w, http.StatusAccepted, loginResponse{
+	writeJSON(w, http.StatusOK, loginResponse{
 		Token: token,
 	})
 
+}
+
+func (s *ServerHTTP) handleMe(w http.ResponseWriter, r *http.Request) {
+	id, ok := userIDFromContext(r.Context())
+	if !ok {
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"user_id": id})
+}
+
+func (s *ServerHTTP) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		token, ok := strings.CutPrefix(header, "Bearer ")
+		if token == "" || !ok {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+
+		id, err := s.tokens.Parse(token)
+		if err != nil {
+			writeError(w, http.StatusUnauthorized, "invalid token")
+			return
+		}
+		ctx := context.WithValue(r.Context(), ctxKey{}, id)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func writeJSON(w http.ResponseWriter, statusCode int, v any) {
@@ -127,4 +160,9 @@ func writeError(w http.ResponseWriter, statusCode int, msg string) {
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(errorDTO{Message: msg, Time: time.Now()})
+}
+
+func userIDFromContext(ctx context.Context) (int, bool) {
+	id, ok := ctx.Value(ctxKey{}).(int)
+	return id, ok
 }
