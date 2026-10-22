@@ -11,6 +11,7 @@ import (
 
 	"github.com/DrollltedUp/notesJWT/internal/auth"
 	"github.com/DrollltedUp/notesJWT/internal/model"
+	"github.com/DrollltedUp/notesJWT/internal/note"
 )
 
 type errorDTO struct {
@@ -22,6 +23,7 @@ type ServerHTTP struct {
 	svc    *model.Service
 	log    *slog.Logger
 	tokens *auth.TokenManager
+	crud   *note.ServiceCRUD
 }
 
 type registerRequest struct {
@@ -45,11 +47,12 @@ type loginResponse struct {
 
 type ctxKey struct{}
 
-func NewServerHTTP(svc *model.Service, log *slog.Logger, tokens *auth.TokenManager) *ServerHTTP {
+func NewServerHTTP(svc *model.Service, log *slog.Logger, tokens *auth.TokenManager, crud *note.ServiceCRUD) *ServerHTTP {
 	return &ServerHTTP{
 		svc:    svc,
 		log:    log,
 		tokens: tokens,
+		crud:   crud,
 	}
 }
 

@@ -9,6 +9,7 @@ import (
 
 	"github.com/DrollltedUp/notesJWT/internal/auth"
 	"github.com/DrollltedUp/notesJWT/internal/model"
+	"github.com/DrollltedUp/notesJWT/internal/note"
 )
 
 func main() {
@@ -20,7 +21,8 @@ func main() {
 		os.Exit(1)
 	}
 	tokens := auth.NewTokenManager(secret, 24*time.Hour)
-	srv := NewServerHTTP(svc, log, tokens)
+	crud := note.NewServiceCRUD(note.NewNotesMemoryStore())
+	srv := NewServerHTTP(svc, log, tokens, crud)
 
 	httpServer := &http.Server{
 		Addr:              ":9097",
