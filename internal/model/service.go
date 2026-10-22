@@ -80,3 +80,8 @@ func normalizeEmail(email string) string {
 	normalizeEmail := strings.ToLower(strings.TrimSpace(email))
 	return normalizeEmail
 }
+
+// СRUD Service
+func (s *Service) Create(userID, title, body string) (Note, error) {
+
+}
