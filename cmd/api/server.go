@@ -62,6 +62,13 @@ func (s *ServerHTTP) routes() http.Handler {
 	mux.HandleFunc("POST /login", s.handleLogin)
 	mux.Handle("GET /me", s.authMiddleware(http.HandlerFunc(s.handleMe)))
 
+	//CRUD
+	mux.Handle("POST /notes", s.authMiddleware(http.HandlerFunc(s.CreateHandler)))
+	mux.Handle("GET /notes", s.authMiddleware(http.HandlerFunc(s.GetAllHandler)))
+	mux.Handle("GET /notes/{id}", s.authMiddleware(http.HandlerFunc(s.GetNotesByIDHandler)))
+	mux.Handle("PUT /notes{id}", s.authMiddleware(http.HandlerFunc(s.UpdateNoteHandler)))
+	mux.Handle("DELETE /notes/{id}", s.authMiddleware(http.HandlerFunc(s.DeleteNoteHandler)))
+
 	return mux
 }
 
