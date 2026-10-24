@@ -96,7 +96,7 @@ func (s *ServerHTTP) GetNotesByIDHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, note)
+	writeJSON(w, http.StatusOK, toNoteResponse(note))
 
 }
 
@@ -125,7 +125,7 @@ func (s *ServerHTTP) UpdateNoteHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, n)
+	writeJSON(w, http.StatusOK, toNoteResponse(n))
 }
 
 // Delete note
