@@ -17,5 +17,32 @@ services:
       timeout: 3s
       retries: 10
 
+  migrate:
+    image: migrate/migrate:v4.17.1
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./migrations:/migrations:ro
+    command:
+      - "-path=/migrations"
+      - "-database=postgres://notes:notes_dev_password@db:5432/notes?sslmode=disable"
+      - "up"
+
+  app:
+    build: .
+    container_name: notes-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://notes:notes_dev_password@db:5432/notes?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:?задай JWT_SECRET в файле .env}
+    ports:
+      - "127.0.0.1:9097:9097"
+
 volumes:
   notes_pgdata:

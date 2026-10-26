@@ -70,8 +70,8 @@ func (s *ServerHTTP) GetAllHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := make([]noteResponse, 0, len(notes))
-	for _, n := range resp {
-		resp = append(resp, n)
+	for _, n := range notes {
+		resp = append(resp, toNoteResponse(n))
 	}
 
 	writeJSON(w, http.StatusOK, resp)

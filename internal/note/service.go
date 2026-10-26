@@ -16,22 +16,12 @@ func NewServiceCRUD(s Store) *ServiceCRUD {
 }
 
 func (s *ServiceCRUD) Create(userID int, title, body string) (Note, error) {
-	if title == "" || body == "" {
-		return Note{}, ErrInvalidInput
-	}
-
-	note := Note{
-		OwnerID: userID,
-		Title:   title,
-		Body:    body,
-	}
-
-	created, err := s.store.Create(note)
+	title, err := validate(title, body)
 	if err != nil {
 		return Note{}, err
 	}
 
-	return created, err
+	return s.store.Create(Note{OwnerID: userID, Title: title, Body: body})
 }
 
 func (s *ServiceCRUD) Get(userID, id int) (Note, error) {

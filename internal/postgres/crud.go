@@ -60,7 +60,7 @@ func (s *NoteMemory) ListByOwner(ownerID int) ([]note.Note, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
 
-	rows, err := s.pool.Query(ctx, `SELECT id, owner_id, title, body, created_at, updated_at FROM notes, WHERE owner_id = $1 ORDER BY id`, ownerID)
+	rows, err := s.pool.Query(ctx, `SELECT id, owner_id, title, body, created_at, updated_at FROM notes WHERE owner_id = $1 ORDER BY id`, ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("scan note: %w", err)
 	}
@@ -102,7 +102,7 @@ func (s *NoteMemory) Delete(id int) error {
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
 
-	tag, err := s.pool.Exec(ctx, `DELETE FRO< notes WHERE id = $1`, id)
+	tag, err := s.pool.Exec(ctx, `DELETE FROM notes WHERE id = $1`, id)
 	if err != nil {
 		return fmt.Errorf("delete note: %w", err)
 	}
