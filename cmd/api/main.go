@@ -36,9 +36,9 @@ func main() {
 
 	defer pool.Close()
 
-	svc := model.NewService(model.NewStore())
+	svc := model.NewService(postgres.NewUserStore(pool))
 	tokens := auth.NewTokenManager(secret, 24*time.Hour)
-	crud := note.NewServiceCRUD(note.NewNotesMemoryStore())
+	crud := note.NewServiceCRUD(postgres.NewNoteMemoty(pool))
 	srv := NewServerHTTP(svc, log, tokens, crud)
 
 	httpServer := &http.Server{

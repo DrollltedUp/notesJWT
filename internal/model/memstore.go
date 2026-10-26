@@ -39,6 +39,9 @@ func (s *MemoryStore) Create(u User) (User, error) {
 }
 
 func (s *MemoryStore) GetByMail(email string) (User, error) {
+	s.mtx.RLock()
+	defer s.mtx.RUnlock()
+
 	user, ok := s.data[email]
 	if !ok {
 		return User{}, ErrNotFound

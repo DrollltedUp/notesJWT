@@ -27,7 +27,7 @@ func (s *UserStore) Create(u model.User) (model.User, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
 	defer cancel()
 
-	err := s.pool.QueryRow(ctx, `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, created_at`, u.Email, u.CreatedAt).Scan(&u.ID, &u.CreatedAt)
+	err := s.pool.QueryRow(ctx, `INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, created_at`, u.Email, u.PasswordHash).Scan(&u.ID, &u.CreatedAt)
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == uniqueViolation {
